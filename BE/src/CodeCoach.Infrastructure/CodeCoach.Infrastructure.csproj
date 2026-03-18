@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CodeCoach.Domain\CodeCoach.Domain.csproj" />
+    <ProjectReference Include="..\CodeCoach.Application\CodeCoach.Application.csproj" />
   </ItemGroup>
 
   <ItemGroup>
