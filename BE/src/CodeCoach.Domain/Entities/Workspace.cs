@@ -35,4 +35,21 @@ public class Workspace
         SourceCode = sourceCode;
         UpdatedAt = DateTime.UtcNow;
     }
+
+    public void UpdateSnapshot(string language, string sourceCode)
+    {
+        if (string.IsNullOrWhiteSpace(language))
+        {
+            throw new ArgumentException("Language is required.", nameof(language));
+        }
+
+        if (sourceCode is null)
+        {
+            throw new ArgumentNullException(nameof(sourceCode));
+        }
+
+        Language = language;
+        SourceCode = sourceCode;
+        UpdatedAt = DateTime.UtcNow;
+    }
 }

@@ -6,6 +6,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 using CodeCoach.Api.Contracts.Rooms;
+using CodeCoach.Application.Rooms.Commands.JoinRoom;
 using CodeCoach.Application.Rooms.Commands.CreateRoom;
 using CodeCoach.Application.Rooms.Queries.GetRoomByJoinCode;
 
@@ -48,6 +49,17 @@ public class RoomsController : ControllerBase
         {
             return NotFound();
         }
+
+        return Ok(room);
+    }
+
+    [HttpPost("{joinCode}/join")]
+    public async Task<IActionResult> JoinAsync(
+        string joinCode,
+        [FromBody] JoinRoomRequest request,
+        CancellationToken cancellationToken)
+    {
+        var room = await _sender.Send(new JoinRoomCommand(joinCode, request.UserId), cancellationToken);
 
         return Ok(room);
     }
