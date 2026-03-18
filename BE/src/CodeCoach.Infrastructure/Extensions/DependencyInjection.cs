@@ -2,12 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-using MediatR;
-
-using CodeCoach.Application.Abstractions;
 using CodeCoach.Application.Interfaces;
-using CodeCoach.Application.Rooms.Commands.CreateRoom;
-using CodeCoach.Application.Services;
 using CodeCoach.Infrastructure.Data;
 using CodeCoach.Infrastructure.Data.Repositories;
 
@@ -30,11 +25,6 @@ public static class DependencyInjection
         services.AddScoped<IRoomRepository, RoomRepository>();
         services.AddScoped<IRoomParticipantRepository, RoomParticipantRepository>();
         services.AddScoped<IWorkspaceRepository, WorkspaceRepository>();
-
-        services.AddMediatR(cfg =>
-            cfg.RegisterServicesFromAssemblyContaining<CreateRoomCommandHandler>());
-
-        services.AddSingleton<IJoinCodeGenerator, JoinCodeGenerator>();
 
         return services;
     }
