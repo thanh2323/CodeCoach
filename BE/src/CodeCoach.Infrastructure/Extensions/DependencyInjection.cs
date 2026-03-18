@@ -2,7 +2,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
+using CodeCoach.Application.Interfaces;
 using CodeCoach.Infrastructure.Data;
+using CodeCoach.Infrastructure.Data.Repositories;
 
 namespace CodeCoach.Infrastructure.Extensions;
 
@@ -18,6 +20,11 @@ public static class DependencyInjection
 
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseNpgsql(connectionString));
+
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IRoomRepository, RoomRepository>();
+        services.AddScoped<IRoomParticipantRepository, RoomParticipantRepository>();
+        services.AddScoped<IWorkspaceRepository, WorkspaceRepository>();
 
         return services;
     }
