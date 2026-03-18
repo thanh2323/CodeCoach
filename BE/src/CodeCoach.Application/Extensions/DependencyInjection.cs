@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 using CodeCoach.Application.Abstractions;
 using CodeCoach.Application.Rooms.Commands.CreateRoom;
+using CodeCoach.Application.Rooms.Services;
 using CodeCoach.Application.Services;
 
 namespace CodeCoach.Application.Extensions;
@@ -16,6 +17,7 @@ public static class DependencyInjection
             cfg.RegisterServicesFromAssemblyContaining<CreateRoomCommandHandler>());
 
         services.AddSingleton<IJoinCodeGenerator, JoinCodeGenerator>();
+        services.AddScoped<IJoinRoomService, RoomJoinService>();
 
         return services;
     }

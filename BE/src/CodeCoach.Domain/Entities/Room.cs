@@ -47,4 +47,23 @@ public class Room
         CurrentMode = RoomMode.Broadcast;
         CreatedAt = DateTime.UtcNow;
     }
+
+    public void EnsureActive()
+    {
+        if (Status != RoomStatus.Active)
+        {
+            throw new InvalidOperationException("Room is not active.");
+        }
+    }
+
+    public void Close()
+    {
+        if (Status == RoomStatus.Closed)
+        {
+            return;
+        }
+
+        Status = RoomStatus.Closed;
+        ClosedAt = DateTime.UtcNow;
+    }
 }
