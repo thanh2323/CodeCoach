@@ -15,8 +15,8 @@ using Xunit;
 using CodeCoach.Api.Contracts.Workspaces;
 using CodeCoach.Api.Controllers;
 using CodeCoach.Application.DTOs;
-using CodeCoach.Application.Workspaces.Commands.SaveWorkspaceSnapshot;
-using CodeCoach.Application.Workspaces.Queries.GetWorkspace;
+using CodeCoach.Application.Features.Workspaces.Commands.SaveWorkspaceSnapshot;
+using CodeCoach.Application.Features.Workspaces.Queries.GetWorkspace;
 
 namespace CodeCoach.Api.Tests.Controllers;
 

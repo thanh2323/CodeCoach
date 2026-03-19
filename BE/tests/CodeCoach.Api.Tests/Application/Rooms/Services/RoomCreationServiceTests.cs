@@ -3,7 +3,7 @@ using Moq;
 using CodeCoach.Application.Abstractions;
 using CodeCoach.Application.Exceptions;
 using CodeCoach.Application.Interfaces;
-using CodeCoach.Application.Rooms.Services;
+using CodeCoach.Application.Features.Rooms.Services;
 using CodeCoach.Domain.Entities;
 using CodeCoach.Domain.Enums;
 

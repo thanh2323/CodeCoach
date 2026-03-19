@@ -7,7 +7,7 @@ using Moq;
 using Xunit;
 
 using CodeCoach.Application.Interfaces;
-using CodeCoach.Application.Rooms.Queries.GetRoomByJoinCode;
+using CodeCoach.Application.Features.Rooms.Queries.GetRoomByJoinCode;
 using CodeCoach.Domain.Entities;
 
 namespace CodeCoach.Api.Tests.Application.Rooms.Queries.GetRoomByJoinCode;

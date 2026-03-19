@@ -10,8 +10,8 @@ using Microsoft.AspNetCore.Mvc;
 
 using CodeCoach.Api.Contracts.Workspaces;
 using CodeCoach.Application.Exceptions;
-using CodeCoach.Application.Workspaces.Commands.SaveWorkspaceSnapshot;
-using CodeCoach.Application.Workspaces.Queries.GetWorkspace;
+using CodeCoach.Application.Features.Workspaces.Commands.SaveWorkspaceSnapshot;
+using CodeCoach.Application.Features.Workspaces.Queries.GetWorkspace;
 
 namespace CodeCoach.Api.Controllers;
 

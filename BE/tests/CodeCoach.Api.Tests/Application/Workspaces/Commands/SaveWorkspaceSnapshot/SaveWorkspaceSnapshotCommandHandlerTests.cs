@@ -7,7 +7,7 @@ using Moq;
 
 using CodeCoach.Application.Exceptions;
 using CodeCoach.Application.Interfaces;
-using CodeCoach.Application.Workspaces.Commands.SaveWorkspaceSnapshot;
+using CodeCoach.Application.Features.Workspaces.Commands.SaveWorkspaceSnapshot;
 using CodeCoach.Domain.Entities;
 
 namespace CodeCoach.Api.Tests.Application.Workspaces.Commands.SaveWorkspaceSnapshot;

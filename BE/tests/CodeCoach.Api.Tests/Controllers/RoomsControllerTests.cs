@@ -15,9 +15,9 @@ using Xunit;
 using CodeCoach.Api.Contracts.Rooms;
 using CodeCoach.Api.Controllers;
 using CodeCoach.Application.DTOs;
-using CodeCoach.Application.Rooms.Commands.CreateRoom;
-using CodeCoach.Application.Rooms.Commands.JoinRoom;
-using CodeCoach.Application.Rooms.Queries.GetRoomByJoinCode;
+using CodeCoach.Application.Features.Rooms.Commands.CreateRoom;
+using CodeCoach.Application.Features.Rooms.Commands.JoinRoom;
+using CodeCoach.Application.Features.Rooms.Queries.GetRoomByJoinCode;
 
 namespace CodeCoach.Api.Tests.Controllers;
 

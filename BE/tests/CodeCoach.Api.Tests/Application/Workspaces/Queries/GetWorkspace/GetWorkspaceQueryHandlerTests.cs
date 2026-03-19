@@ -8,7 +8,7 @@ using Xunit;
 
 using CodeCoach.Application.DTOs;
 using CodeCoach.Application.Interfaces;
-using CodeCoach.Application.Workspaces.Queries.GetWorkspace;
+using CodeCoach.Application.Features.Workspaces.Queries.GetWorkspace;
 using CodeCoach.Domain.Entities;
 
 namespace CodeCoach.Api.Tests.Application.Workspaces.Queries.GetWorkspace;
