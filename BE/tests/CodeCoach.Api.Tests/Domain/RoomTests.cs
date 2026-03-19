@@ -36,4 +36,16 @@ public class RoomTests
         Assert.Throws<ArgumentException>(() => new Room("Math 101", "ABCD12", Guid.Empty, mentorId));
         Assert.Throws<ArgumentException>(() => new Room("Math 101", "ABCD12", mentorId, Guid.Empty));
     }
+
+    [Fact]
+    public void Close_SetsClosedStatusAndTimestamp()
+    {
+        var mentorId = Guid.NewGuid();
+        var room = new Room("Math 101", "ABCD12", mentorId, mentorId);
+
+        room.Close();
+
+        Assert.Equal(RoomStatus.Closed, room.Status);
+        Assert.NotNull(room.ClosedAt);
+    }
 }

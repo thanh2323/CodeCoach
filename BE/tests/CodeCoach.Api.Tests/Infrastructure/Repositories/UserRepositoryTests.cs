@@ -27,7 +27,7 @@ public class UserRepositoryTests
         using var dbContext = CreateDbContext();
         var repository = new UserRepository(dbContext);
 
-        var user = new User("Alice", null, null);
+        var user = new User("Alice", "alice@example.com", "hashed-password");
 
         var result = await repository.AddAsync(user);
 
@@ -41,13 +41,28 @@ public class UserRepositoryTests
         using var dbContext = CreateDbContext();
         var repository = new UserRepository(dbContext);
 
-        var user = new User("Bob", null, null);
+        var user = new User("Bob", "bob@example.com", "hashed-password");
         await repository.AddAsync(user);
 
         var result = await repository.GetByIdAsync(user.Id);
 
         Assert.NotNull(result);
         Assert.Equal("Bob", result.Name);
+    }
+
+    [Fact]
+    public async Task GetByEmailAsync_ReturnsEntity_WhenEmailMatchesIgnoringCase()
+    {
+        using var dbContext = CreateDbContext();
+        var repository = new UserRepository(dbContext);
+
+        var user = new User("Bob", "bob@example.com", "hashed-password");
+        await repository.AddAsync(user);
+
+        var result = await repository.GetByEmailAsync("BOB@example.com");
+
+        Assert.NotNull(result);
+        Assert.Equal(user.Id, result!.Id);
     }
 
     [Fact]

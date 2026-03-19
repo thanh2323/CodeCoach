@@ -22,6 +22,15 @@ public class UserRepository : IUserRepository
             .FirstOrDefaultAsync(user => user.Id == id, cancellationToken);
     }
 
+    public Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
+    {
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+
+        return _dbContext.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(user => user.Email == normalizedEmail, cancellationToken);
+    }
+
     public async Task<User> AddAsync(User user, CancellationToken cancellationToken = default)
     {
         await _dbContext.Users.AddAsync(user, cancellationToken);

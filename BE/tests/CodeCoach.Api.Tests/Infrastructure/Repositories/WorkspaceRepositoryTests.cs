@@ -93,7 +93,7 @@ public class WorkspaceRepositoryTests
         var workspace = new Workspace(roomId, userId, "javascript", "original");
         await repository.AddAsync(workspace);
 
-        typeof(Workspace).GetProperty("SourceCode")!.SetValue(workspace, "updated code");
+        workspace.UpdateSnapshot("javascript", "updated code");
         await repository.UpdateAsync(workspace);
 
         var result = await repository.GetWorkspaceAsync(roomId, userId);

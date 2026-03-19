@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 
 using Xunit;
 
@@ -24,5 +25,29 @@ public class WorkspaceTests
         Assert.Throws<ArgumentException>(() => new Workspace(Guid.Empty, Guid.NewGuid(), "csharp", string.Empty));
         Assert.Throws<ArgumentException>(() => new Workspace(Guid.NewGuid(), Guid.NewGuid(), " ", string.Empty));
         Assert.Throws<ArgumentNullException>(() => new Workspace(Guid.NewGuid(), Guid.NewGuid(), "csharp", null!));
+    }
+
+    [Fact]
+    public void UpdateSnapshot_UpdatesLanguageSourceCode_AndUpdatedAt()
+    {
+        var workspace = new Workspace(Guid.NewGuid(), Guid.NewGuid(), "csharp", "before");
+        var originalUpdatedAt = workspace.UpdatedAt;
+
+        Thread.Sleep(5);
+
+        workspace.UpdateSnapshot("python", "print('after')");
+
+        Assert.Equal("python", workspace.Language);
+        Assert.Equal("print('after')", workspace.SourceCode);
+        Assert.True(workspace.UpdatedAt > originalUpdatedAt);
+    }
+
+    [Fact]
+    public void UpdateSnapshot_Throws_WhenRequiredFieldsMissing()
+    {
+        var workspace = new Workspace(Guid.NewGuid(), Guid.NewGuid(), "csharp", string.Empty);
+
+        Assert.Throws<ArgumentException>(() => workspace.UpdateSnapshot(" ", "code"));
+        Assert.Throws<ArgumentNullException>(() => workspace.UpdateSnapshot("csharp", null!));
     }
 }
