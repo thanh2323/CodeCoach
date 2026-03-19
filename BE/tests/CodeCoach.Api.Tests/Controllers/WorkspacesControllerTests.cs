@@ -1,9 +1,11 @@
 using System;
+using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 
 using MediatR;
 
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 using Moq;
@@ -39,9 +41,9 @@ public class WorkspacesControllerTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(workspace);
 
-        var controller = new WorkspacesController(sender.Object);
+        var controller = CreateController(sender.Object, userId);
 
-        var result = await controller.GetAsync(roomId, userId, CancellationToken.None);
+        var result = await controller.GetAsync(roomId, CancellationToken.None);
 
         var okResult = Assert.IsType<OkObjectResult>(result);
         Assert.Equal(workspace, okResult.Value);
@@ -59,9 +61,9 @@ public class WorkspacesControllerTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((WorkspaceDto?)null);
 
-        var controller = new WorkspacesController(sender.Object);
+        var controller = CreateController(sender.Object, userId);
 
-        var result = await controller.GetAsync(roomId, userId, CancellationToken.None);
+        var result = await controller.GetAsync(roomId, CancellationToken.None);
 
         Assert.IsType<NotFoundResult>(result);
     }
@@ -83,10 +85,31 @@ public class WorkspacesControllerTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(Unit.Value);
 
-        var controller = new WorkspacesController(sender.Object);
+        var controller = CreateController(sender.Object, userId);
 
-        var result = await controller.SaveSnapshotAsync(roomId, userId, request, CancellationToken.None);
+        var result = await controller.SaveSnapshotAsync(roomId, request, CancellationToken.None);
 
         Assert.IsType<NoContentResult>(result);
+    }
+
+    private static WorkspacesController CreateController(ISender sender, Guid userId)
+    {
+        var controller = new WorkspacesController(sender)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity(
+                        new[]
+                        {
+                            new Claim(ClaimTypes.NameIdentifier, userId.ToString())
+                        },
+                        "TestAuth"))
+                }
+            }
+        };
+
+        return controller;
     }
 }

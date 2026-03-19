@@ -1,11 +1,14 @@
 using System.Threading;
 using System.Threading.Tasks;
+using System.Security.Claims;
 
 using MediatR;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 using CodeCoach.Api.Contracts.Rooms;
+using CodeCoach.Application.Exceptions;
 using CodeCoach.Application.Rooms.Commands.JoinRoom;
 using CodeCoach.Application.Rooms.Commands.CreateRoom;
 using CodeCoach.Application.Rooms.Queries.GetRoomByJoinCode;
@@ -13,6 +16,7 @@ using CodeCoach.Application.Rooms.Queries.GetRoomByJoinCode;
 namespace CodeCoach.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/v1/rooms")]
 public class RoomsController : ControllerBase
 {
@@ -29,13 +33,10 @@ public class RoomsController : ControllerBase
         CancellationToken cancellationToken)
     {
         var room = await _sender.Send(
-            new CreateRoomCommand(request.Name, request.MentorId),
+            new CreateRoomCommand(request.Name, GetCurrentUserId()),
             cancellationToken);
 
-        return CreatedAtAction(
-            nameof(GetByJoinCodeAsync),
-            new { joinCode = room.JoinCode },
-            room);
+        return Created($"/api/v1/rooms/{room.JoinCode}", room);
     }
 
     [HttpGet("{joinCode}")]
@@ -56,11 +57,22 @@ public class RoomsController : ControllerBase
     [HttpPost("{joinCode}/join")]
     public async Task<IActionResult> JoinAsync(
         string joinCode,
-        [FromBody] JoinRoomRequest request,
         CancellationToken cancellationToken)
     {
-        var room = await _sender.Send(new JoinRoomCommand(joinCode, request.UserId), cancellationToken);
+        var room = await _sender.Send(new JoinRoomCommand(joinCode, GetCurrentUserId()), cancellationToken);
 
         return Ok(room);
+    }
+
+    private Guid GetCurrentUserId()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (!Guid.TryParse(userId, out var parsedUserId))
+        {
+            throw new UnauthorizedException("Authenticated user id claim is missing.");
+        }
+
+        return parsedUserId;
     }
 }

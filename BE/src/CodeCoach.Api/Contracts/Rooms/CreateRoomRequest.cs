@@ -2,4 +2,4 @@ using System;
 
 namespace CodeCoach.Api.Contracts.Rooms;
 
-public record CreateRoomRequest(string Name, Guid MentorId);
+public record CreateRoomRequest(string Name);

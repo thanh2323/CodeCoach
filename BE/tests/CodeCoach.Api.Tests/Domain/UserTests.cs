@@ -9,13 +9,14 @@ namespace CodeCoach.Api.Tests.Domain;
 public class UserTests
 {
     [Fact]
-    public void User_Creation_SetsIdAndName_OptionalEmailAvatar()
+    public void User_Creation_SetsIdAndNormalizesEmail()
     {
-        var user = new User("Alice", null, null);
+        var user = new User("Alice", "ALICE@example.com", "hashed-password");
 
         Assert.NotEqual(Guid.Empty, user.Id);
         Assert.Equal("Alice", user.Name);
-        Assert.Null(user.Email);
+        Assert.Equal("alice@example.com", user.Email);
+        Assert.Equal("hashed-password", user.PasswordHash);
         Assert.Null(user.AvatarUrl);
         Assert.NotEqual(default, user.CreatedAt);
     }
@@ -23,6 +24,13 @@ public class UserTests
     [Fact]
     public void User_Creation_Throws_WhenNameInvalid()
     {
-        Assert.Throws<ArgumentException>(() => new User("  ", null, null));
+        Assert.Throws<ArgumentException>(() => new User("  ", "alice@example.com", "hashed-password"));
+    }
+
+    [Fact]
+    public void User_Creation_Throws_WhenEmailOrPasswordHashInvalid()
+    {
+        Assert.Throws<ArgumentException>(() => new User("Alice", "  ", "hashed-password"));
+        Assert.Throws<ArgumentException>(() => new User("Alice", "alice@example.com", "  "));
     }
 }

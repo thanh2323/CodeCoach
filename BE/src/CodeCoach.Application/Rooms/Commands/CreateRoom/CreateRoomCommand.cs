@@ -6,4 +6,4 @@ using CodeCoach.Application.DTOs;
 
 namespace CodeCoach.Application.Rooms.Commands.CreateRoom;
 
-public record CreateRoomCommand(string Name, Guid MentorId) : IRequest<RoomDto>;
+public record CreateRoomCommand(string Name, Guid UserId) : IRequest<RoomDto>;

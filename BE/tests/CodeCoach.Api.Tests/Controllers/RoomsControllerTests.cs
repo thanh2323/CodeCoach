@@ -1,9 +1,11 @@
 using System;
+using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 
 using MediatR;
 
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 using Moq;
@@ -22,24 +24,23 @@ namespace CodeCoach.Api.Tests.Controllers;
 public class RoomsControllerTests
 {
     [Fact]
-    public async Task CreateAsync_SendsCommand_AndReturnsCreatedAtAction()
+    public async Task CreateAsync_SendsCommand_AndReturnsCreated()
     {
         var sender = new Mock<ISender>();
-        var mentorId = Guid.NewGuid();
-        var room = new RoomDto(Guid.NewGuid(), "Test Room", "ABC123", mentorId, "Active");
+        var userId = Guid.NewGuid();
+        var room = new RoomDto(Guid.NewGuid(), "Test Room", "ABC123", userId, "Active");
 
         sender.Setup(mock => mock.Send(
-                It.IsAny<CreateRoomCommand>(),
+                It.Is<CreateRoomCommand>(command => command.Name == "Test Room" && command.UserId == userId),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(room);
 
-        var controller = new RoomsController(sender.Object);
-        var request = new CreateRoomRequest("Test Room", mentorId);
+        var controller = CreateController(sender.Object, userId);
+        var request = new CreateRoomRequest("Test Room");
 
         var result = await controller.CreateAsync(request, CancellationToken.None);
 
-        var createdResult = Assert.IsType<CreatedAtActionResult>(result);
-        Assert.Equal(nameof(RoomsController.GetByJoinCodeAsync), createdResult.ActionName);
+        var createdResult = Assert.IsType<CreatedResult>(result);
         Assert.Equal(room, createdResult.Value);
     }
 
@@ -54,7 +55,7 @@ public class RoomsControllerTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(room);
 
-        var controller = new RoomsController(sender.Object);
+        var controller = CreateController(sender.Object, Guid.NewGuid());
 
         var result = await controller.GetByJoinCodeAsync("ABC123", CancellationToken.None);
 
@@ -72,7 +73,7 @@ public class RoomsControllerTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((RoomDto?)null);
 
-        var controller = new RoomsController(sender.Object);
+        var controller = CreateController(sender.Object, Guid.NewGuid());
 
         var result = await controller.GetByJoinCodeAsync("MISSING", CancellationToken.None);
 
@@ -102,12 +103,32 @@ public class RoomsControllerTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(room);
 
-        var controller = new RoomsController(sender.Object);
-        var request = new JoinRoomRequest(userId);
+        var controller = CreateController(sender.Object, userId);
 
-        var result = await controller.JoinAsync("ABC123", request, CancellationToken.None);
+        var result = await controller.JoinAsync("ABC123", CancellationToken.None);
 
         var okResult = Assert.IsType<OkObjectResult>(result);
         Assert.Equal(room, okResult.Value);
+    }
+
+    private static RoomsController CreateController(ISender sender, Guid userId)
+    {
+        var controller = new RoomsController(sender)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity(
+                        new[]
+                        {
+                            new Claim(ClaimTypes.NameIdentifier, userId.ToString())
+                        },
+                        "TestAuth"))
+                }
+            }
+        };
+
+        return controller;
     }
 }

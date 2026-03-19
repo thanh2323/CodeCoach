@@ -2,6 +2,7 @@ using System.Collections.Generic;
 
 using MediatR;
 
+using CodeCoach.Application.Exceptions;
 using CodeCoach.Application.Interfaces;
 
 namespace CodeCoach.Application.Workspaces.Commands.SaveWorkspaceSnapshot;
@@ -24,7 +25,7 @@ public class SaveWorkspaceSnapshotCommandHandler : IRequestHandler<SaveWorkspace
 
         if (workspace is null)
         {
-            throw new KeyNotFoundException("Workspace was not found.");
+            throw new NotFoundException("Workspace was not found.");
         }
 
         workspace.UpdateSnapshot(request.Language, request.SourceCode);

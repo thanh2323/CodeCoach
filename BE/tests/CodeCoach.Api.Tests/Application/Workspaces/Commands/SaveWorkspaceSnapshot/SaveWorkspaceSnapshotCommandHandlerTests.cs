@@ -5,8 +5,7 @@ using System.Threading.Tasks;
 
 using Moq;
 
-using Xunit;
-
+using CodeCoach.Application.Exceptions;
 using CodeCoach.Application.Interfaces;
 using CodeCoach.Application.Workspaces.Commands.SaveWorkspaceSnapshot;
 using CodeCoach.Domain.Entities;
@@ -47,7 +46,7 @@ public class SaveWorkspaceSnapshotCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_ThrowsKeyNotFoundException_WhenWorkspaceDoesNotExist()
+    public async Task Handle_ThrowsNotFoundException_WhenWorkspaceDoesNotExist()
     {
         var roomId = Guid.NewGuid();
         var userId = Guid.NewGuid();
@@ -60,6 +59,6 @@ public class SaveWorkspaceSnapshotCommandHandlerTests
             new SaveWorkspaceSnapshotCommand(roomId, userId, "python", "print('after')"),
             CancellationToken.None);
 
-        await Assert.ThrowsAsync<KeyNotFoundException>(action);
+        await Assert.ThrowsAsync<NotFoundException>(action);
     }
 }

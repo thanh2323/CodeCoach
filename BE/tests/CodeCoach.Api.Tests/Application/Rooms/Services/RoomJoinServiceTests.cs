@@ -5,8 +5,8 @@ using System.Threading.Tasks;
 
 using Moq;
 
-using Xunit;
-
+using CodeCoach.Application.Abstractions;
+using CodeCoach.Application.Exceptions;
 using CodeCoach.Application.Interfaces;
 using CodeCoach.Application.Rooms.Services;
 using CodeCoach.Domain.Entities;
@@ -20,6 +20,7 @@ public class RoomJoinServiceTests
     private readonly Mock<IUserRepository> _userRepositoryMock;
     private readonly Mock<IRoomParticipantRepository> _roomParticipantRepositoryMock;
     private readonly Mock<IWorkspaceRepository> _workspaceRepositoryMock;
+    private readonly Mock<ITransactionManager> _transactionManagerMock;
     private readonly RoomJoinService _service;
 
     public RoomJoinServiceTests()
@@ -28,12 +29,21 @@ public class RoomJoinServiceTests
         _userRepositoryMock = new Mock<IUserRepository>();
         _roomParticipantRepositoryMock = new Mock<IRoomParticipantRepository>();
         _workspaceRepositoryMock = new Mock<IWorkspaceRepository>();
+        _transactionManagerMock = new Mock<ITransactionManager>();
+
+        _transactionManagerMock
+            .Setup(mock => mock.ExecuteAsync(
+                It.IsAny<Func<CancellationToken, Task<CodeCoach.Application.DTOs.RoomDetailsDto>>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns((Func<CancellationToken, Task<CodeCoach.Application.DTOs.RoomDetailsDto>> operation, CancellationToken ct) =>
+                operation(ct));
 
         _service = new RoomJoinService(
             _roomRepositoryMock.Object,
             _userRepositoryMock.Object,
             _roomParticipantRepositoryMock.Object,
-            _workspaceRepositoryMock.Object);
+            _workspaceRepositoryMock.Object,
+            _transactionManagerMock.Object);
     }
 
     [Fact]
@@ -42,7 +52,7 @@ public class RoomJoinServiceTests
         var userId = Guid.NewGuid();
         var mentorId = Guid.NewGuid();
         var room = new Room("Algorithms", "JOIN01", mentorId, mentorId);
-        var user = new User("Alice", null, null);
+        var user = new User("Alice", "alice@example.com", "hashed-password");
         RoomParticipant? capturedParticipant = null;
         Workspace? capturedWorkspace = null;
 
@@ -85,7 +95,7 @@ public class RoomJoinServiceTests
     }
 
     [Fact]
-    public async Task JoinAsync_WhenRoomDoesNotExist_ThrowsKeyNotFoundException()
+    public async Task JoinAsync_WhenRoomDoesNotExist_ThrowsNotFoundException()
     {
         _roomRepositoryMock
             .Setup(mock => mock.GetByJoinCodeAsync("MISSING", It.IsAny<CancellationToken>()))
@@ -93,11 +103,11 @@ public class RoomJoinServiceTests
 
         var action = () => _service.JoinAsync("MISSING", Guid.NewGuid(), CancellationToken.None);
 
-        await Assert.ThrowsAsync<KeyNotFoundException>(action);
+        await Assert.ThrowsAsync<NotFoundException>(action);
     }
 
     [Fact]
-    public async Task JoinAsync_WhenUserDoesNotExist_ThrowsKeyNotFoundException()
+    public async Task JoinAsync_WhenUserDoesNotExist_ThrowsNotFoundException()
     {
         var mentorId = Guid.NewGuid();
         var userId = Guid.NewGuid();
@@ -112,16 +122,16 @@ public class RoomJoinServiceTests
 
         var action = () => _service.JoinAsync("JOIN01", userId, CancellationToken.None);
 
-        await Assert.ThrowsAsync<KeyNotFoundException>(action);
+        await Assert.ThrowsAsync<NotFoundException>(action);
     }
 
     [Fact]
-    public async Task JoinAsync_WhenRoomIsClosed_ThrowsInvalidOperationException()
+    public async Task JoinAsync_WhenRoomIsClosed_ThrowsConflictException()
     {
         var mentorId = Guid.NewGuid();
         var userId = Guid.NewGuid();
         var room = new Room("Algorithms", "JOIN01", mentorId, mentorId);
-        var user = new User("Alice", null, null);
+        var user = new User("Alice", "alice@example.com", "hashed-password");
 
         room.Close();
 
@@ -134,16 +144,16 @@ public class RoomJoinServiceTests
 
         var action = () => _service.JoinAsync("JOIN01", userId, CancellationToken.None);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(action);
+        await Assert.ThrowsAsync<ConflictException>(action);
     }
 
     [Fact]
-    public async Task JoinAsync_WhenUserAlreadyJoined_ThrowsInvalidOperationException()
+    public async Task JoinAsync_WhenUserAlreadyJoined_ThrowsConflictException()
     {
         var mentorId = Guid.NewGuid();
         var userId = Guid.NewGuid();
         var room = new Room("Algorithms", "JOIN01", mentorId, mentorId);
-        var user = new User("Alice", null, null);
+        var user = new User("Alice", "alice@example.com", "hashed-password");
         var participant = new RoomParticipant(room.Id, userId, RoomRole.Student);
 
         _roomRepositoryMock
@@ -158,6 +168,6 @@ public class RoomJoinServiceTests
 
         var action = () => _service.JoinAsync("JOIN01", userId, CancellationToken.None);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(action);
+        await Assert.ThrowsAsync<ConflictException>(action);
     }
 }
