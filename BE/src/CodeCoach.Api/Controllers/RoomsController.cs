@@ -9,9 +9,9 @@ using Microsoft.AspNetCore.Mvc;
 
 using CodeCoach.Api.Contracts.Rooms;
 using CodeCoach.Application.Exceptions;
-using CodeCoach.Application.Rooms.Commands.JoinRoom;
-using CodeCoach.Application.Rooms.Commands.CreateRoom;
-using CodeCoach.Application.Rooms.Queries.GetRoomByJoinCode;
+using CodeCoach.Application.Features.Rooms.Commands.JoinRoom;
+using CodeCoach.Application.Features.Rooms.Commands.CreateRoom;
+using CodeCoach.Application.Features.Rooms.Queries.GetRoomByJoinCode;
 
 namespace CodeCoach.Api.Controllers;
 

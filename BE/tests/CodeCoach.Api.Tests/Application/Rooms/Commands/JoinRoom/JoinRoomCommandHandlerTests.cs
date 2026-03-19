@@ -7,8 +7,8 @@ using Moq;
 using Xunit;
 
 using CodeCoach.Application.DTOs;
-using CodeCoach.Application.Rooms.Commands.JoinRoom;
-using CodeCoach.Application.Rooms.Services;
+using CodeCoach.Application.Features.Rooms.Commands.JoinRoom;
+using CodeCoach.Application.Features.Rooms.Services;
 
 namespace CodeCoach.Api.Tests.Application.Rooms.Commands.JoinRoom;
 

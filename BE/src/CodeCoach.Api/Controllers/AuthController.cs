@@ -6,10 +6,10 @@ using Microsoft.Extensions.Options;
 
 using CodeCoach.Api.Auth;
 using CodeCoach.Api.Contracts.Auth;
-using CodeCoach.Application.Auth.Commands.Logout;
-using CodeCoach.Application.Auth.Commands.LoginUser;
-using CodeCoach.Application.Auth.Commands.RefreshSession;
-using CodeCoach.Application.Auth.Commands.RegisterUser;
+using CodeCoach.Application.Features.Auth.Commands.Logout;
+using CodeCoach.Application.Features.Auth.Commands.LoginUser;
+using CodeCoach.Application.Features.Auth.Commands.RefreshSession;
+using CodeCoach.Application.Features.Auth.Commands.RegisterUser;
 using CodeCoach.Application.Exceptions;
 
 namespace CodeCoach.Api.Controllers;
