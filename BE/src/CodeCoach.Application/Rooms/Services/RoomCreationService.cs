@@ -38,36 +38,33 @@ public class RoomCreationService : ICreateRoomService
         CancellationToken cancellationToken = default)
     {
         var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
+        ValidateUserExists(user);
 
+        return await _transactionManager.ExecuteAsync(async ct =>
+        {
+            var room = await CreateRoomWithJoinCodeAsync(name, userId, ct);
+            await AddMentorParticipantAsync(room, userId, ct);
+            await CreateDefaultWorkspaceAsync(room.Id, userId, ct);
+            return MapToDto(room);
+        }, cancellationToken);
+    }
+
+    private void ValidateUserExists(User? user)
+    {
         if (user is null)
         {
             throw new NotFoundException("User was not found.");
         }
+    }
 
-        return await _transactionManager.ExecuteAsync(async transactionCancellationToken =>
-        {
-            var joinCode = await GenerateUniqueJoinCodeAsync(transactionCancellationToken);
-            var room = new Room(name, joinCode, userId, userId);
-
-            await _roomRepository.AddAsync(room, transactionCancellationToken);
-
-            var participant = new RoomParticipant(room.Id, userId, RoomRole.Mentor);
-            await _roomParticipantRepository.AddAsync(participant, transactionCancellationToken);
-
-            var workspace = new Workspace(
-                room.Id,
-                userId,
-                DefaultWorkspaceLanguage,
-                DefaultWorkspaceSourceCode);
-            await _workspaceRepository.AddAsync(workspace, transactionCancellationToken);
-
-            return new RoomDto(
-                room.Id,
-                room.Name,
-                room.JoinCode,
-                room.MentorId,
-                room.Status.ToString());
-        }, cancellationToken);
+    private async Task<Room> CreateRoomWithJoinCodeAsync(
+        string name,
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var joinCode = await GenerateUniqueJoinCodeAsync(cancellationToken);
+        var room = new Room(name, joinCode, userId, userId);
+        return await _roomRepository.AddAsync(room, cancellationToken);
     }
 
     private async Task<string> GenerateUniqueJoinCodeAsync(CancellationToken cancellationToken)
@@ -82,5 +79,33 @@ public class RoomCreationService : ICreateRoomService
                 return candidate;
             }
         }
+    }
+
+    private async Task AddMentorParticipantAsync(
+        Room room,
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var participant = new RoomParticipant(room.Id, userId, RoomRole.Mentor);
+        await _roomParticipantRepository.AddAsync(participant, cancellationToken);
+    }
+
+    private async Task CreateDefaultWorkspaceAsync(
+        Guid roomId,
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var workspace = new Workspace(roomId, userId, DefaultWorkspaceLanguage, DefaultWorkspaceSourceCode);
+        await _workspaceRepository.AddAsync(workspace, cancellationToken);
+    }
+
+    private RoomDto MapToDto(Room room)
+    {
+        return new RoomDto(
+            room.Id,
+            room.Name,
+            room.JoinCode,
+            room.MentorId,
+            room.Status.ToString());
     }
 }

@@ -1,11 +1,11 @@
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
 using Moq;
 
 using CodeCoach.Application.Abstractions;
+using CodeCoach.Application.DTOs;
 using CodeCoach.Application.Exceptions;
 using CodeCoach.Application.Interfaces;
 using CodeCoach.Application.Rooms.Services;
@@ -32,10 +32,10 @@ public class RoomJoinServiceTests
         _transactionManagerMock = new Mock<ITransactionManager>();
 
         _transactionManagerMock
-            .Setup(mock => mock.ExecuteAsync(
-                It.IsAny<Func<CancellationToken, Task<CodeCoach.Application.DTOs.RoomDetailsDto>>>(),
+            .Setup(mock => mock.ExecuteAsync<RoomDetailsDto>(
+                It.IsAny<Func<CancellationToken, Task<RoomDetailsDto>>>(),
                 It.IsAny<CancellationToken>()))
-            .Returns((Func<CancellationToken, Task<CodeCoach.Application.DTOs.RoomDetailsDto>> operation, CancellationToken ct) =>
+            .Returns((Func<CancellationToken, Task<RoomDetailsDto>> operation, CancellationToken ct) =>
                 operation(ct));
 
         _service = new RoomJoinService(
@@ -49,49 +49,46 @@ public class RoomJoinServiceTests
     [Fact]
     public async Task JoinAsync_WhenRoomAndUserAreValid_CreatesParticipantAndWorkspace()
     {
-        var userId = Guid.NewGuid();
         var mentorId = Guid.NewGuid();
         var room = new Room("Algorithms", "JOIN01", mentorId, mentorId);
         var user = new User("Alice", "alice@example.com", "hashed-password");
-        RoomParticipant? capturedParticipant = null;
-        Workspace? capturedWorkspace = null;
 
         _roomRepositoryMock
             .Setup(mock => mock.GetByJoinCodeAsync("JOIN01", It.IsAny<CancellationToken>()))
             .ReturnsAsync(room);
         _userRepositoryMock
-            .Setup(mock => mock.GetByIdAsync(userId, It.IsAny<CancellationToken>()))
+            .Setup(mock => mock.GetByIdAsync(user.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
         _roomParticipantRepositoryMock
-            .Setup(mock => mock.GetParticipantAsync(room.Id, userId, It.IsAny<CancellationToken>()))
+            .Setup(mock => mock.GetParticipantAsync(room.Id, user.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync((RoomParticipant?)null);
         _roomParticipantRepositoryMock
             .Setup(mock => mock.AddAsync(It.IsAny<RoomParticipant>(), It.IsAny<CancellationToken>()))
-            .Callback<RoomParticipant, CancellationToken>((participant, _) => capturedParticipant = participant)
-            .ReturnsAsync((RoomParticipant participant, CancellationToken _) => participant);
+            .ReturnsAsync((RoomParticipant p, CancellationToken _) => p);
         _workspaceRepositoryMock
             .Setup(mock => mock.AddAsync(It.IsAny<Workspace>(), It.IsAny<CancellationToken>()))
-            .Callback<Workspace, CancellationToken>((workspace, _) => capturedWorkspace = workspace)
-            .ReturnsAsync((Workspace workspace, CancellationToken _) => workspace);
+            .ReturnsAsync((Workspace w, CancellationToken _) => w);
 
-        var result = await _service.JoinAsync("JOIN01", userId, CancellationToken.None);
+        var result = await _service.JoinAsync("JOIN01", user.Id, CancellationToken.None);
 
         Assert.Equal(room.Id, result.Id);
         Assert.Equal("Algorithms", result.Name);
         Assert.Equal("JOIN01", result.JoinCode);
         Assert.Equal("Active", result.Status);
         Assert.Equal("Broadcast", result.CurrentMode);
+        Assert.Equal("csharp", result.Language);
 
-        Assert.NotNull(capturedParticipant);
-        Assert.Equal(room.Id, capturedParticipant!.RoomId);
-        Assert.Equal(userId, capturedParticipant.UserId);
-        Assert.Equal(RoomRole.Student, capturedParticipant.Role);
+        _roomParticipantRepositoryMock.Verify(
+            mock => mock.AddAsync(
+                It.Is<RoomParticipant>(p => p.RoomId == room.Id && p.UserId == user.Id && p.Role == RoomRole.Student),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
 
-        Assert.NotNull(capturedWorkspace);
-        Assert.Equal(room.Id, capturedWorkspace!.RoomId);
-        Assert.Equal(userId, capturedWorkspace.UserId);
-        Assert.Equal("csharp", capturedWorkspace.Language);
-        Assert.Equal(string.Empty, capturedWorkspace.SourceCode);
+        _workspaceRepositoryMock.Verify(
+            mock => mock.AddAsync(
+                It.Is<Workspace>(w => w.RoomId == room.Id && w.UserId == user.Id && w.Language == "csharp"),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
@@ -129,7 +126,6 @@ public class RoomJoinServiceTests
     public async Task JoinAsync_WhenRoomIsClosed_ThrowsConflictException()
     {
         var mentorId = Guid.NewGuid();
-        var userId = Guid.NewGuid();
         var room = new Room("Algorithms", "JOIN01", mentorId, mentorId);
         var user = new User("Alice", "alice@example.com", "hashed-password");
 
@@ -139,10 +135,10 @@ public class RoomJoinServiceTests
             .Setup(mock => mock.GetByJoinCodeAsync("JOIN01", It.IsAny<CancellationToken>()))
             .ReturnsAsync(room);
         _userRepositoryMock
-            .Setup(mock => mock.GetByIdAsync(userId, It.IsAny<CancellationToken>()))
+            .Setup(mock => mock.GetByIdAsync(user.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
-        var action = () => _service.JoinAsync("JOIN01", userId, CancellationToken.None);
+        var action = () => _service.JoinAsync("JOIN01", user.Id, CancellationToken.None);
 
         await Assert.ThrowsAsync<ConflictException>(action);
     }
@@ -151,22 +147,21 @@ public class RoomJoinServiceTests
     public async Task JoinAsync_WhenUserAlreadyJoined_ThrowsConflictException()
     {
         var mentorId = Guid.NewGuid();
-        var userId = Guid.NewGuid();
         var room = new Room("Algorithms", "JOIN01", mentorId, mentorId);
         var user = new User("Alice", "alice@example.com", "hashed-password");
-        var participant = new RoomParticipant(room.Id, userId, RoomRole.Student);
+        var participant = new RoomParticipant(room.Id, user.Id, RoomRole.Student);
 
         _roomRepositoryMock
             .Setup(mock => mock.GetByJoinCodeAsync("JOIN01", It.IsAny<CancellationToken>()))
             .ReturnsAsync(room);
         _userRepositoryMock
-            .Setup(mock => mock.GetByIdAsync(userId, It.IsAny<CancellationToken>()))
+            .Setup(mock => mock.GetByIdAsync(user.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
         _roomParticipantRepositoryMock
-            .Setup(mock => mock.GetParticipantAsync(room.Id, userId, It.IsAny<CancellationToken>()))
+            .Setup(mock => mock.GetParticipantAsync(room.Id, user.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(participant);
 
-        var action = () => _service.JoinAsync("JOIN01", userId, CancellationToken.None);
+        var action = () => _service.JoinAsync("JOIN01", user.Id, CancellationToken.None);
 
         await Assert.ThrowsAsync<ConflictException>(action);
     }
