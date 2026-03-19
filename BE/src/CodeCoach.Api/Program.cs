@@ -42,8 +42,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     {
         var signingKey = builder.Configuration["Jwt:SigningKey"]
             ?? throw new InvalidOperationException("JWT signing key is missing.");
-        var accessTokenCookieName =
-            builder.Configuration["AuthCookies:AccessTokenCookieName"] ?? "codecoach_access_token";
+
+        var accessTokenCookieName = builder.Configuration["AuthCookies:AccessTokenCookieName"]
+            ?? AuthCookieOptions.DefaultAccessTokenCookieName;
 
         options.TokenValidationParameters = new TokenValidationParameters
         {
